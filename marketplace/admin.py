@@ -1,3 +1,11 @@
 from django.contrib import admin
+from .models import CustomerProfile, SellerProfile, Store, Product, CartItem, Order, OrderItem
 
-# Register your models here.
+# ثبت مدل‌ها در پنل ادمین
+admin.site.register(CustomerProfile)
+admin.site.register(SellerProfile)
+admin.site.register(Store)
+admin.site.register(Product)
+admin.site.register(CartItem)
+admin.site.register(Order)
+admin.site.register(OrderItem)
