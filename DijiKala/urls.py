@@ -16,6 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.contrib.auth import views as auth_views
 from marketplace.views import (
     home_view, stores_view, store_detail_view, 
     seller_panel_view, customer_panel_view, cart_view, payment_view,
@@ -35,9 +36,9 @@ urlpatterns = [
     path('payment/', payment_view, name='payment'),
     
     # مسیرهای احراز هویت و ساخت فروشگاه برای هماهنگی با ناوبری base.html
-    path('login/', login_view, name='login'),
-    path('logout/', logout_view, name='logout'),
     path('signup/', signup_view, name='signup'),
     path('create-store/', create_store_view, name='create_store'),
     path('stores/<int:store_id>/add-product/', add_product_view, name='add_product'),
+    path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
+    path('logout/', auth_views.LogoutView.as_view(template_name='registration/logged_out.html'), name='logout'),
 ]

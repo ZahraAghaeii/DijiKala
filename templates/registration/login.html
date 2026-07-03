@@ -1,25 +1,38 @@
 {% extends 'base.html' %}
+{% load static %}
+
 {% block title %}Login | DijiKala{% endblock %}
 
 {% block content %}
-<h2>🔐 Login</h2>
+<div class="auth-container" style="display: flex; justify-content: center; align-items: center; margin-top: 50px;">
+    <div class="card" style="width: 400px; padding: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-radius: 8px;">
+        <h2 style="margin-bottom: 20px;">🔒 Login</h2>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            {% if form.errors %}
+                <div style="color: red; margin-bottom: 15px;">
+                    Username or password is incorrect!
+                </div>
+            {% endif %}
 
-<form method="post" class="auth-form">
-    {% csrf_token %}
-    {{ form.non_field_errors }}
-    <div class="form-group">
-        <label for="id_username">Username</label>
-        {{ form.username }}
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label for="id_username" style="display: block; margin-bottom: 5px; font-weight: bold;">Username</label>
+                <input type="text" name="username" id="id_username" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label for="id_password" style="display: block; margin-bottom: 5px; font-weight: bold;">Password</label>
+                <input type="password" name="password" id="id_password" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+            </div>
+
+            <button type="submit" class="btn" style="width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">Login</button>
+        </form>
+        
+        <p style="margin-top: 15px; text-align: center;">
+            Don't have an account? <a href="{% url 'signup' %}" style="color: #007bff; text-decoration: none;">Sign up</a>
+        </p>
     </div>
-    <div class="form-group">
-        <label for="id_password">Password</label>
-        {{ form.password }}
-    </div>
-
-    <button type="submit" class="btn">Login</button>
-
-    <p class="auth-link">Don't have an account? 
-        <a href="{% url 'signup' %}">Sign up</a>
-    </p>
-</form>
+</div>
 {% endblock %}
