@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Product, Store, CartItem
+from .models import Product, Store, CartItem, CustomerProfile
+from django.contrib.auth.decorators import login_required
 
 def home_view(request):
     # گرفتن همه محصولات و مرتب‌سازی بر اساس جدیدترین‌ها
@@ -33,11 +34,15 @@ def customer_panel_view(request):
     return render(request, 'customer_panel.html')
 
 # ۶. صفحه سبد خرید
+@login_required
 def cart_view(request):
-    # فعلاً برای تست، اقلام سبد خرید را می‌کشیم (بعداً با سیستم یوزرها دقیق‌ترش می‌کنیم)
-    cart_items = CartItem.objects.all()
+    # پیدا کردن پروفایل مشتریِ کاربری که لاگین کرده است
+    customer = get_object_or_404(CustomerProfile, user=request.user)
     
-    # محاسبه قیمت کل سبد خرید
+    # گرفتن اقلام سبد خرید فقط برای این مشتری
+    cart_items = CartItem.objects.filter(customer=customer)
+    
+    # محاسبه قیمت کل
     total_price = sum(item.product.price * item.quantity for item in cart_items)
     
     context = {
@@ -46,12 +51,18 @@ def cart_view(request):
     }
     return render(request, 'cart.html', context)
 
+# اصلاح ویوی افزودن به سبد خرید
+@login_required
 def add_to_cart_view(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     
-    # پیدا کردن یا ساختن آیتم در سبد خرید
+    # پیدا کردن پروفایل مشتریِ کاربری که لاگین کرده است
+    customer = get_object_or_404(CustomerProfile, user=request.user)
+    
+    # پیدا کردن یا ساختن آیتم در سبد خرید با مشخص کردن مشتری
     cart_item, created = CartItem.objects.get_or_create(
         product=product,
+        customer=customer,  # حل مشکل ارور NOT NULL
         defaults={'quantity': 1}
     )
     
