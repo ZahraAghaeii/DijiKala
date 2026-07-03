@@ -1,5 +1,5 @@
-from django.shortcuts import render, get_object_or_404
-from .models import Product, Store
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Product, Store, CartItem
 
 def home_view(request):
     # گرفتن همه محصولات و مرتب‌سازی بر اساس جدیدترین‌ها
@@ -34,7 +34,32 @@ def customer_panel_view(request):
 
 # ۶. صفحه سبد خرید
 def cart_view(request):
-    return render(request, 'cart.html')
+    # فعلاً برای تست، اقلام سبد خرید را می‌کشیم (بعداً با سیستم یوزرها دقیق‌ترش می‌کنیم)
+    cart_items = CartItem.objects.all()
+    
+    # محاسبه قیمت کل سبد خرید
+    total_price = sum(item.product.price * item.quantity for item in cart_items)
+    
+    context = {
+        'cart_items': cart_items,
+        'total_price': total_price
+    }
+    return render(request, 'cart.html', context)
+
+def add_to_cart_view(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    
+    # پیدا کردن یا ساختن آیتم در سبد خرید
+    cart_item, created = CartItem.objects.get_or_create(
+        product=product,
+        defaults={'quantity': 1}
+    )
+    
+    if not created:
+        cart_item.quantity += 1
+        cart_item.save()
+        
+    return redirect('cart')
 
 # ۷. صفحه پرداخت آزمایشی
 def payment_view(request):
