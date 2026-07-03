@@ -40,5 +40,6 @@ urlpatterns = [
     path('create-store/', create_store_view, name='create_store'),
     path('stores/<int:store_id>/add-product/', add_product_view, name='add_product'),
     path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(template_name='registration/logged_out.html'), name='logout'),
+    # خط مربوط به logout را پیدا کن و دقیقاً با این جایگزین کن:
+    path('logout/', auth_views.LogoutView.as_view(next_page='/'), name='logout'),
 ]
