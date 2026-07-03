@@ -38,13 +38,10 @@ def customer_panel_view(request):
 # ۶. صفحه سبد خرید
 @login_required
 def cart_view(request):
-    # پیدا کردن پروفایل مشتریِ کاربری که لاگین کرده است
-    customer = get_object_or_404(CustomerProfile, user=request.user)
+    # اگر پروفایل مشتری وجود نداشت، خودش خودکار یکی می‌سازد (get_or_create)
+    customer, _ = CustomerProfile.objects.get_or_create(user=request.user)
     
-    # گرفتن اقلام سبد خرید فقط برای این مشتری
     cart_items = CartItem.objects.filter(customer=customer)
-    
-    # محاسبه قیمت کل
     total_price = sum(item.product.price * item.quantity for item in cart_items)
     
     context = {
@@ -53,18 +50,17 @@ def cart_view(request):
     }
     return render(request, 'cart.html', context)
 
-# اصلاح ویوی افزودن به سبد خرید
+# ویوی هوشمند افزودن به سبد خرید
 @login_required
 def add_to_cart_view(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     
-    # پیدا کردن پروفایل مشتریِ کاربری که لاگین کرده است
-    customer = get_object_or_404(CustomerProfile, user=request.user)
+    # اگر پروفایل مشتری وجود نداشت، خودش خودکار یکی می‌سازد تا ارور 404 ندهد
+    customer, _ = CustomerProfile.objects.get_or_create(user=request.user)
     
-    # پیدا کردن یا ساختن آیتم در سبد خرید با مشخص کردن مشتری
     cart_item, created = CartItem.objects.get_or_create(
         product=product,
-        customer=customer,  # حل مشکل ارور NOT NULL
+        customer=customer,
         defaults={'quantity': 1}
     )
     
@@ -73,6 +69,7 @@ def add_to_cart_view(request, product_id):
         cart_item.save()
         
     return redirect('cart')
+
 
 # ۷. صفحه پرداخت آزمایشی
 def payment_view(request):
