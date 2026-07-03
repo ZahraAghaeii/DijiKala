@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Product
+from .models import Product, Store
 
 def home_view(request):
     # گرفتن همه محصولات و مرتب‌سازی بر اساس جدیدترین‌ها
@@ -8,7 +8,8 @@ def home_view(request):
 
 # ۲. صفحه لیست فروشگاه‌ها
 def stores_view(request):
-    return render(request, 'stores.html')
+    stores = Store.objects.all()  # گرفتن تمام فروشگاه‌ها از دیتابیس
+    return render(request, 'stores.html', {'stores': stores})
 
 # ۳. صفحه جزئیات فروشگاه
 def store_detail_view(request, store_id):
