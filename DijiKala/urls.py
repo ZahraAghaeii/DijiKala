@@ -21,7 +21,7 @@ from marketplace.views import (
     home_view, stores_view, store_detail_view, 
     seller_panel_view, customer_panel_view, cart_view, payment_view,
     login_view, logout_view, signup_view, create_store_view , add_product_view,
-    add_product_view, add_to_cart_view
+    add_product_view, add_to_cart_view, remove_from_cart_view
 )
 
 urlpatterns = [
@@ -33,7 +33,8 @@ urlpatterns = [
     path('customer/', customer_panel_view, name='customer_panel'),
     path('cart/', cart_view, name='cart'),
     path('cart/add/<int:product_id>/', add_to_cart_view, name='add_to_cart'),
-    path('payment/', payment_view, name='payment'),
+    path('cart/remove/<int:item_id>/', remove_from_cart_view, name='remove_from_cart'),
+    path('payment/', payment_view, name='checkout'),  # نام آدرس را به checkout تغییر دادیم
     
     # مسیرهای احراز هویت و ساخت فروشگاه برای هماهنگی با ناوبری base.html
     path('signup/', signup_view, name='signup'),

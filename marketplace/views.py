@@ -70,6 +70,16 @@ def add_to_cart_view(request, product_id):
         
     return redirect('cart')
 
+# ویوی حذف آیتم از سبد خرید
+@login_required
+def remove_from_cart_view(request, item_id):
+    # پیدا کردن آیتم سبد خرید بر اساس آی‌دی که متعلق به همین کاربر باشد
+    customer = get_object_or_404(CustomerProfile, user=request.user)
+    cart_item = get_object_or_404(CartItem, id=item_id, customer=customer)
+    
+    cart_item.delete() # حذف آیتم از دیتابیس
+    return redirect('cart') # ریدایرکت مجدد به صفحه سبد خرید
+
 
 # ۷. صفحه پرداخت آزمایشی
 def payment_view(request):
