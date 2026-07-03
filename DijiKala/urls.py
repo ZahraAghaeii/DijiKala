@@ -19,7 +19,7 @@ from django.urls import path
 from marketplace.views import (
     home_view, stores_view, store_detail_view, 
     seller_panel_view, customer_panel_view, cart_view, payment_view,
-    login_view, logout_view, signup_view, create_store_view
+    login_view, logout_view, signup_view, create_store_view , add_product_view
 )
 
 urlpatterns = [
@@ -37,4 +37,5 @@ urlpatterns = [
     path('logout/', logout_view, name='logout'),
     path('signup/', signup_view, name='signup'),
     path('create-store/', create_store_view, name='create_store'),
+    path('stores/<int:store_id>/add-product/', add_product_view, name='add_product'),
 ]
