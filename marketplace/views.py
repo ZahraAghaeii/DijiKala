@@ -1,6 +1,8 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Product, Store, CartItem, CustomerProfile
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import login
 
 def home_view(request):
     # گرفتن همه محصولات و مرتب‌سازی بر اساس جدیدترین‌ها
@@ -84,7 +86,15 @@ def logout_view(request):
     return render(request, 'registration/logged_out.html')
 
 def signup_view(request):
-    return render(request, 'registration/signup.html')
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save() # ذخیره کاربر جدید در دیتابیس
+            login(request, user) # لاگین خودکار بعد از ثبت‌نام موفق
+            return redirect('home') # هدایت به صفحه اصلی
+    else:
+        form = UserCreationForm()
+    return render(request, 'registration/signup.html', {'form': form})
 
 def create_store_view(request):
     return render(request, 'store_detail.html') # یا هر قالبی که بعداً کامل 
