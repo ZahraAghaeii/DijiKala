@@ -34,7 +34,8 @@ urlpatterns = [
     path('cart/', cart_view, name='cart'),
     path('cart/add/<int:product_id>/', add_to_cart_view, name='add_to_cart'),
     path('cart/remove/<int:item_id>/', remove_from_cart_view, name='remove_from_cart'),
-    path('payment/', payment_view, name='checkout'),  # نام آدرس را به checkout تغییر دادیم
+    path('payment/', payment_view, name='checkout'), # نام آدرس را به checkout تغییر دادیم
+    path('payment/process/', payment_view, name='payment'),
     
     # مسیرهای احراز هویت و ساخت فروشگاه برای هماهنگی با ناوبری base.html
     path('signup/', signup_view, name='signup'),

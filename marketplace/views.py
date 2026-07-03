@@ -3,6 +3,7 @@ from .models import Product, Store, CartItem, CustomerProfile
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
+from decimal import Decimal
 
 def home_view(request):
     # گرفتن همه محصولات و مرتب‌سازی بر اساس جدیدترین‌ها
@@ -82,8 +83,28 @@ def remove_from_cart_view(request, item_id):
 
 
 # ۷. صفحه پرداخت آزمایشی
+@login_required
 def payment_view(request):
-    return render(request, 'payment.html')
+    customer, _ = CustomerProfile.objects.get_or_create(user=request.user)
+    cart_items = CartItem.objects.filter(customer=customer)
+    total_price = sum(item.product.price * item.quantity for item in cart_items)
+    
+    if request.method == 'POST' and 'amount' in request.POST:
+        # تبدیل ورودی به Decimal به جای float برای هماهنگی با دیتابیس
+        amount_str = request.POST.get('amount', '0')
+        if amount_str:
+            amount = Decimal(amount_str)
+            customer.balance += amount
+            customer.save()
+        return redirect('checkout')
+    
+    context = {
+        'customer': customer,
+        'cart_items': cart_items,
+        'total_price': total_price,
+        'sufficient_balance': customer.balance >= total_price 
+    }
+    return render(request, 'payment.html', context)
 
 # ویوهای موقت برای احراز هویت و ساخت فروشگاه
 def login_view(request):

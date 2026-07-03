@@ -1,13 +1,56 @@
 {% extends 'base.html' %}
-{% block title %}Payment | DijiKala{% endblock %}
+{% block title %}Payment & Checkout | DijiKala{% endblock %}
 
 {% block content %}
-<h2>💳 Add Balance</h2>
+<div style="max-width: 600px; margin: 30px auto; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-radius: 8px;">
+    
+    {% if not sufficient_balance %}
+        <!-- حالت اول: موجودی کافی نیست و باید حساب را شارژ کند -->
+        <h2 style="color: #dc3545; margin-bottom: 20px;">💳 Insufficient Balance</h2>
+        <p style="color: #6c757d;">Your current balance is <strong>${{ customer.balance }}</strong>, but your cart total is <strong>${{ total_price }}</strong>.</p>
+        <p>Please charge your wallet to proceed with the payment:</p>
+        
+        <form action="{% url 'payment' %}" method="post" class="payment-form" style="margin-top: 20px;">
+            {% csrf_token %}
+            <div style="margin-bottom: 15px;">
+                <label for="amount" style="display: block; margin-bottom: 5px; font-weight: bold;">Enter amount:</label>
+                <input type="number" name="amount" id="amount" min="1" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+            </div>
+            <button type="submit" class="btn" style="width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Add Balance</button>
+        </form>
 
-<form action="{% url 'payment' %}" method="post" class="payment-form">
-    {% csrf_token %}
-    <label for="amount">Enter amount:</label>
-    <input type="number" name="amount" id="amount" min="1" required>
-    <button type="submit" class="btn">Add Balance</button>
-</form>
+    {% else %}
+        <!-- حالت دوم: موجودی کافی است و فاکتور نهایی را نشان می‌دهد -->
+        <h2 style="color: #28a745; margin-bottom: 20px;">🛒 Order Summary</h2>
+        <p style="color: #6c757d;">Your Wallet Balance: <strong>${{ customer.balance }}</strong></p>
+        
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+            <thead>
+                <tr style="border-bottom: 20px solid transparent;">
+                    <th style="text-align: left;">Product</th>
+                    <th style="text-align: center;">Qty</th>
+                    <th style="text-align: right;">Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in cart_items %}
+                <tr style="border-bottom: 1px solid #eee; height: 40px;">
+                    <td>{{ item.product.name }}</td>
+                    <td style="text-align: center;">{{ item.quantity }}</td>
+                    <td style="text-align: right;">${{ item.product.price }}</td>
+                </tr>
+                {% endfor %}
+                <tr style="font-weight: bold; height: 50px;">
+                    <td>Total Price:</td>
+                    <td></td>
+                    <td style="text-align: right; color: #28a745;">${{ total_price }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- دکمه نهایی کردن خرید (فعلاً به صفحه اصلی ریدایرکت می‌کند تا بعداً منطق خالی کردن سبد را بنویسیم) -->
+        <a href="{% url 'home' %}" class="btn" style="display: block; text-align: center; padding: 12px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-size: 16px; font-weight: bold;">Finalize Payment & Order</a>
+    {% endif %}
+
+</div>
 {% endblock %}
