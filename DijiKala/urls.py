@@ -1,19 +1,3 @@
-"""
-URL configuration for DijiKala project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
 from django.urls import path
 from django.contrib.auth import views as auth_views
@@ -21,7 +5,8 @@ from marketplace.views import (
     home_view, stores_view, store_detail_view, 
     seller_panel_view, customer_panel_view, cart_view, payment_view,
     login_view, logout_view, signup_view, create_store_view, add_product_view,
-    add_to_cart_view, remove_from_cart_view, checkout_view  # اسم تابع جدید رو اینجا اضافه کردم
+    add_to_cart_view, remove_from_cart_view, checkout_view,
+    order_history_view  # این همون تابعی هست که دوستت جدیداً اضافه کرده
 )
 
 urlpatterns = [
@@ -35,12 +20,13 @@ urlpatterns = [
     path('cart/add/<int:product_id>/', add_to_cart_view, name='add_to_cart'),
     path('cart/remove/<int:item_id>/', remove_from_cart_view, name='remove_from_cart'),
     
-    # این آدرس برای نهایی کردن خرید و خالی کردن سبد خریده
+    # بخش پرداخت و چک‌اوت تو
     path('cart/checkout/', checkout_view, name='process_checkout'), 
-    
-    # این آدرس همون آدرس پرداخت قبلی شماست که به تابع جدید وصل شده
     path('payment/', checkout_view, name='checkout'), 
     path('payment/process/', payment_view, name='payment'),
+    
+    # آدرسی که دوستت برای تاریخچه سفارشات ساخته
+    path('customer/orders/', order_history_view, name='order_history'),
     
     path('signup/', signup_view, name='signup'),
     path('create-store/', create_store_view, name='create_store'),

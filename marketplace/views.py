@@ -1,10 +1,11 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Product, Store, CartItem, CustomerProfile
+from .models import Product, Store, CartItem, CustomerProfile, SellerProfile, Order, OrderItem
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
 from decimal import Decimal
 
+# ۱. صفحه اصلی
 def home_view(request):
     # گرفتن همه محصولات و مرتب‌سازی بر اساس جدیدترین‌ها
     products = Product.objects.all().order_by('-created_at')
@@ -29,12 +30,28 @@ def store_detail_view(request, store_id):
     return render(request, 'store_detail.html', context)
 
 # ۴. پنل فروشنده
+@login_required
 def seller_panel_view(request):
-    return render(request, 'seller_panel.html')
+    # دریافت یا ساخت پروفایل فروشنده
+    seller, _ = SellerProfile.objects.get_or_create(user=request.user)
+    # دریافت فروشگاه‌های متعلق به این فروشگاه
+    stores = Store.objects.filter(owner=seller)
+    
+    return render(request, 'seller_panel.html', {'stores': stores})
 
 # ۵. پنل مشتری
+@login_required
 def customer_panel_view(request):
-    return render(request, 'customer_panel.html')
+    # دریافت یا ساخت پروفایل مشتری
+    customer, _ = CustomerProfile.objects.get_or_create(user=request.user)
+    # دریافت سفارشات قبلی کاربر برای بخش تاریخچه سفارشات
+    orders = Order.objects.filter(customer=customer).order_by('-date')
+    
+    context = {
+        'customer': customer,
+        'orders': orders
+    }
+    return render(request, 'customer_panel.html', context)
 
 # ۶. صفحه سبد خرید
 @login_required
@@ -113,25 +130,68 @@ def login_view(request):
 def logout_view(request):
     return render(request, 'registration/logged_out.html')
 
+
 def signup_view(request):
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
         if form.is_valid():
-            user = form.save() # ذخیره کاربر جدید در دیتابیس
-            login(request, user) # لاگین خودکار بعد از ثبت‌نام موفق
-            return redirect('home') # هدایت به صفحه اصلی
+            user = form.save()
+            role = request.POST.get('role')  # دریافت نقش از فرم HTML (customer یا seller)
+            
+            if role == 'seller':
+                SellerProfile.objects.create(user=user)
+            else:
+                # به صورت پیش‌فرض یا در صورت انتخاب مشتری
+                CustomerProfile.objects.create(user=user)
+                
+            login(request, user)
+            return redirect('home')
     else:
         form = UserCreationForm()
     return render(request, 'registration/signup.html', {'form': form})
 
+
+@login_required
 def create_store_view(request):
-    return render(request, 'store_detail.html') # یا هر قالبی که بعداً کامل 
+    seller, _ = SellerProfile.objects.get_or_create(user=request.user)
+    
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        description = request.POST.get('description')
+        if name:
+            Store.objects.create(name=name, owner=seller, description=description)
+            return redirect('seller_panel')
+            
+    return render(request, 'seller_panel.html')
 
-# ویوی موقت برای صفحه افزودن محصول جدید
+@login_required
 def add_product_view(request, store_id):
-    return render(request, 'store_detail.html')  # فعلاً برای رفع ارور، به همین صفحه رندر می‌کنیم
+    store = get_object_or_404(Store, id=store_id)
+    seller, _ = SellerProfile.objects.get_or_create(user=request.user)
+    
+    # امنیت: بررسی اینکه آیا این فروشگاه واقعاً متعلق به کاربر فعلی است یا خیر
+    if store.owner != seller:
+        return redirect('home')
+        
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        price = request.POST.get('price')
+        description = request.POST.get('description')
+        image = request.FILES.get('image') # برای آپلود تصویر اختیاری
+        
+        if name and price:
+            Product.objects.create(
+                name=name,
+                price=Decimal(price),
+                description=description,
+                image=image,
+                store=store
+            )
+            return redirect('store_detail', store_id=store.id)
+            
+    return redirect('store_detail', store_id=store.id)
 
-# ویوی نهایی کردن خرید و خالی کردن سبد خرید
+# ویوی نهایی کردن خرید و ثبت در تاریخچه سفارشات
 @login_required
 def checkout_view(request):
     customer, _ = CustomerProfile.objects.get_or_create(user=request.user)
@@ -142,24 +202,36 @@ def checkout_view(request):
         
     total_price = sum(item.product.price * item.quantity for item in cart_items)
     
-    # بررسی کافی بودن موجودی کاربر
     if customer.balance >= total_price:
         # ۱. کسر از موجودی مشتری
         customer.balance -= total_price
         customer.save()
         
-        # ۲. منطق دمو برای اضافه کردن به موجودی فروشگاه‌ها (در صورت وجود فیلد balance در مدل Store)
+        # ۲. ثبت سفارش اصلی
+        order = Order.objects.create(customer=customer, total_amount=total_price)
+        
+        # ۳. ثبت تک‌تک آیتم‌ها در تاریخچه سفارشات
         for item in cart_items:
-            store = item.product.store
-            if hasattr(store, 'balance'):
-                store.balance += item.product.price * item.quantity
-                store.save()
+            OrderItem.objects.create(
+                order=order,
+                product=item.product,
+                quantity=item.quantity,
+                price=item.product.price
+            )
+            
+        cart_items.delete() # خالی کردن سبد خرید پس از موفقیت خرید
         
-        # ۳. حذف آیتم‌ها از سبد خرید (خالی کردن سبد)
-        cart_items.delete()
-        
-        # هدایت به یک صفحه یا پیام موفقیت‌آمیز (مثلاً صفحه اصلی یا پنل مشتری)
-        return redirect('customer_panel') 
+        return render(request, 'payment.html', {'success': True}) 
     else:
-        # اگر موجودی کافی نبود، هدایت به صفحه پرداخت برای افزایش موجودی
-        return redirect('payment')
+        return redirect('payment') 
+    
+# ویوی نمایش تاریخچه سفارشات
+@login_required
+def order_history_view(request):
+    # پیدا کردن پروفایل مشتری
+    customer, _ = CustomerProfile.objects.get_or_create(user=request.user)
+    
+    # گرفتن تمام سفارشات این مشتری به همراه آیتم‌های داخل هر سفارش
+    orders = Order.objects.filter(customer=customer).order_by('-date')
+    
+    return render(request, 'order_history.html', {'orders': orders})
