@@ -22,14 +22,19 @@
                     <td>{{ item.product.store.name }}</td>
                     <td>${{ item.product.price }}</td>
                     <td>{{ item.quantity }}</td>
-                    <td><a href="{% url 'remove_from_cart' item.id %}">❌</a></td>
+                    <!-- اینجا دکمه حذف رو اصلاح کردم تا آیتم رو از سبد خرید پاک کنه -->
+                    <td>
+                        <a href="{% url 'remove_from_cart' item.id %}" class="btn btn-danger">❌ Remove</a>
+                    </td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
 
-    <p><strong>Total:</strong> ${{ total }}</p>
-    <a href="{% url 'checkout' %}" class="btn">✅ Checkout</a>
+    <p><strong>Total:</strong> ${{ total_price }}</p>
+    
+    <!-- اینجا آدرس رو به process_checkout تغییر دادم تا اول موجودی حساب تورو چک کنه -->
+    <a href="{% url 'process_checkout' %}" class="btn">✅ Checkout</a>
 
 {% else %}
     <p>Your cart is empty.</p>

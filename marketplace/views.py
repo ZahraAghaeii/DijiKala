@@ -202,7 +202,9 @@ def checkout_view(request):
         
     total_price = sum(item.product.price * item.quantity for item in cart_items)
     
+    # اول چک می‌کنیم: آیا موجودی کاربر کافی هست؟
     if customer.balance >= total_price:
+        # اگر کافی بود، خرید انجام میشه:
         # ۱. کسر از موجودی مشتری
         customer.balance -= total_price
         customer.save()
@@ -219,12 +221,14 @@ def checkout_view(request):
                 price=item.product.price
             )
             
-        cart_items.delete() # خالی کردن سبد خرید پس از موفقیت خرید
+        cart_items.delete() # خالی کردن سبد خرید
         
-        return render(request, 'payment.html', {'success': True}) 
+        # هدایت به پنل مشتری برای دیدن خرید موفق
+        return redirect('customer_panel') 
     else:
-        return redirect('payment') 
-    
+        # اگر موجودی کافی نبود، تازه اینجاست که می‌فرستیمش به صفحه افزایش موجودی!
+        return redirect('payment')
+        
 # ویوی نمایش تاریخچه سفارشات
 @login_required
 def order_history_view(request):
