@@ -130,3 +130,36 @@ def create_store_view(request):
 # ویوی موقت برای صفحه افزودن محصول جدید
 def add_product_view(request, store_id):
     return render(request, 'store_detail.html')  # فعلاً برای رفع ارور، به همین صفحه رندر می‌کنیم
+
+# ویوی نهایی کردن خرید و خالی کردن سبد خرید
+@login_required
+def checkout_view(request):
+    customer, _ = CustomerProfile.objects.get_or_create(user=request.user)
+    cart_items = CartItem.objects.filter(customer=customer)
+    
+    if not cart_items.exists():
+        return redirect('cart')
+        
+    total_price = sum(item.product.price * item.quantity for item in cart_items)
+    
+    # بررسی کافی بودن موجودی کاربر
+    if customer.balance >= total_price:
+        # ۱. کسر از موجودی مشتری
+        customer.balance -= total_price
+        customer.save()
+        
+        # ۲. منطق دمو برای اضافه کردن به موجودی فروشگاه‌ها (در صورت وجود فیلد balance در مدل Store)
+        for item in cart_items:
+            store = item.product.store
+            if hasattr(store, 'balance'):
+                store.balance += item.product.price * item.quantity
+                store.save()
+        
+        # ۳. حذف آیتم‌ها از سبد خرید (خالی کردن سبد)
+        cart_items.delete()
+        
+        # هدایت به یک صفحه یا پیام موفقیت‌آمیز (مثلاً صفحه اصلی یا پنل مشتری)
+        return redirect('customer_panel') 
+    else:
+        # اگر موجودی کافی نبود، هدایت به صفحه پرداخت برای افزایش موجودی
+        return redirect('payment')
