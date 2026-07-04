@@ -213,6 +213,7 @@ def checkout_view(request):
         order = Order.objects.create(customer=customer, total_amount=total_price)
         
         # ۳. ثبت تک‌تک آیتم‌ها در تاریخچه سفارشات
+        # ۳. ثبت تک‌تک آیتم‌ها در تاریخچه سفارشات
         for item in cart_items:
             OrderItem.objects.create(
                 order=order,
@@ -220,6 +221,11 @@ def checkout_view(request):
                 quantity=item.quantity,
                 price=item.product.price
             )
+            
+            # منطق جدید: اضافه کردن پول به موجودی فروشگاه
+            store = item.product.store
+            store.balance += (item.product.price * item.quantity)
+            store.save()
             
         cart_items.delete() # خالی کردن سبد خرید
         
