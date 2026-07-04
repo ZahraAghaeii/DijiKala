@@ -5,6 +5,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
 from decimal import Decimal
 
+# ۱. صفحه اصلی
 def home_view(request):
     # گرفتن همه محصولات و مرتب‌سازی بر اساس جدیدترین‌ها
     products = Product.objects.all().order_by('-created_at')
@@ -190,6 +191,7 @@ def add_product_view(request, store_id):
             
     return redirect('store_detail', store_id=store.id)
 
+# ویوی نهایی کردن خرید و ثبت در تاریخچه سفارشات
 @login_required
 def checkout_view(request):
     customer, _ = CustomerProfile.objects.get_or_create(user=request.user)
@@ -208,7 +210,7 @@ def checkout_view(request):
         # ۲. ثبت سفارش اصلی
         order = Order.objects.create(customer=customer, total_amount=total_price)
         
-        # ۳. ثبت تک‌تک آیتم‌ها در تاریخچه سفارشات و خالی کردن سبد خرید
+        # ۳. ثبت تک‌تک آیتم‌ها در تاریخچه سفارشات
         for item in cart_items:
             OrderItem.objects.create(
                 order=order,
@@ -216,15 +218,14 @@ def checkout_view(request):
                 quantity=item.quantity,
                 price=item.product.price
             )
-            # (نکته داینامیک داکیومنت: اضافه کردن منطقی به موجودی فرضی فروشگاه در صورت تمایل)
             
-        cart_items.delete() # خالی کردن سبد خرید خرید پس از موفقیت
+        cart_items.delete() # خالی کردن سبد خرید پس از موفقیت خرید
         
-        # اگر سیستم تشکر پس از پرداخت (امتیازی) داری، اینجا رندر کن
         return render(request, 'payment.html', {'success': True}) 
     else:
         return redirect('payment') 
     
+# ویوی نمایش تاریخچه سفارشات
 @login_required
 def order_history_view(request):
     # پیدا کردن پروفایل مشتری
@@ -233,4 +234,4 @@ def order_history_view(request):
     # گرفتن تمام سفارشات این مشتری به همراه آیتم‌های داخل هر سفارش
     orders = Order.objects.filter(customer=customer).order_by('-date')
     
-    return render(request, 'order_history.html', {'orders': orders})    
+    return render(request, 'order_history.html', {'orders': orders})
