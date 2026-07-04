@@ -4,36 +4,80 @@
 
 {% block content %}
 <div class="store-header">
-    <h2>{{ store.name }}</h2>
+    <h2>🏪 {{ store.name }}</h2>
     <p>{{ store.description }}</p>
-
-    {% if user == store.owner.user %}
-        <a href="{% url 'add_product' store.id %}" class="btn">+ Add Product</a>
-    {% endif %}
+    <p><strong>Store Balance:</strong> ${{ store.balance }}</p>
 </div>
 
 <hr>
 
-<div class="card-grid">
-    {% for product in products %}
-        <div class="card">
-            {% if product.image %}
-                <img src="{{ product.image.url }}" alt="{{ product.name }}">
-            {% else %}
-                <img src="{% static 'images/default_product.jpg' %}" alt="No image">
-            {% endif %}
-            <h3>{{ product.name }}</h3>
-            <p>{{ product.description|truncatewords:12 }}</p>
-            <p><strong>${{ product.price }}</strong></p>
+<!-- بخش افزودن محصول جدید -->
+{% if user.is_authenticated and store.owner.user == user %}
+    <div class="add-product-section" style="background: #f4f4f4; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+        <h3>➕ Add New Product to this Store</h3>
+        <form method="post" enctype="multipart/form-data" action="{% url 'add_product' store.id %}">
+            {% csrf_token %}
+            <div style="margin-bottom: 10px;">
+                <label>Product Name:</label><br>
+                <input type="text" name="name" required style="width: 100%; padding: 8px; margin-top: 5px;">
+            </div>
+            <div style="margin-bottom: 10px;">
+                <label>Price ($):</label><br>
+                <input type="number" step="0.01" name="price" required style="width: 100%; padding: 8px; margin-top: 5px;">
+            </div>
+            <div style="margin-bottom: 10px;">
+                <label>Description:</label><br>
+                <textarea name="description" rows="3" style="width: 100%; padding: 8px; margin-top: 5px;"></textarea>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label>Product Image:</label><br>
+                <input type="file" name="image" accept="image/*" style="margin-top: 5px;">
+            </div>
+            <button type="submit" class="btn" style="padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">Add Product</button>
+        </form>
+    </div>
+{% endif %}
 
-            {% if user.is_authenticated %}
-                <a href="{% url 'add_to_cart' product.id %}" class="btn">Add to Cart</a>
-            {% else %}
-                <p><a href="{% url 'login' %}">Login to Buy</a></p>
-            {% endif %}
-        </div>
+<h3>📦 Products in this Store</h3>
+
+<!-- استفاده از ساختار جدول برای اجبار به چیدمان افقی -->
+<table style="width: 100%; border-collapse: separate; border-spacing: 20px; table-layout: fixed;">
+    <tr>
+    {% for product in products %}
+        <!-- هر محصول در یک سلول قرار می‌گیرد تا قطعاً افقی نمایش داده شوند -->
+        <td style="border: 1px solid #ccc; padding: 15px; border-radius: 8px; background: white; vertical-align: top; width: 25%; box-sizing: border-box;">
+            <div style="display: flex; flex-direction: column; height: 100%; justify-content: space-between;">
+                <div>
+                    {% if product.image %}
+                        <img src="/media/{{ product.image }}" alt="{{ product.name }}" style="width: 100%; height: 180px; object-fit: cover; border-radius: 4px; display: block; margin-bottom: 10px;">
+                    {% else %}
+                        <img src="{% static 'images/default_product.jpg' %}" alt="No image" style="width: 100%; height: 180px; object-fit: cover; border-radius: 4px; display: block; margin-bottom: 10px;">
+                    {% endif %}
+                    
+                    <h3 style="margin: 10px 0 5px 0; font-size: 18px; color: #333;">{{ product.name }}</h3>
+                    <p style="color: #666; font-size: 14px; margin-bottom: 10px;">{{ product.description|truncatewords:12 }}</p>
+                </div>
+                
+                <div style="margin-top: auto; padding-top: 10px;">
+                    <p style="font-size: 18px; margin-bottom: 10px; color: #333;"><strong>${{ product.price }}</strong></p>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'add_to_cart' product.id %}" class="btn" style="display: block; text-align: center; text-decoration: none; width: 100%; box-sizing: border-box;">Add to Cart</a>
+                    {% else %}
+                        <p style="text-align: center;"><a href="{% url 'login' %}">Login to Buy</a></p>
+                    {% endif %}
+                </div>
+            </div>
+        </td>
+        
+        <!-- قانون جدول: بعد از هر ۴ محصول، ردیف را می‌شکنیم و به سطر بعدی می‌رویم -->
+        {% if forloop.counter|divisibleby:4 and not forloop.last %}
+            </tr><tr>
+        {% endif %}
+        
     {% empty %}
-        <p>No products in this store yet.</p>
+        <td style="border: none;">No products in this store yet.</td>
     {% endfor %}
-</div>
+    </tr>
+</table>
+
 {% endblock %}
