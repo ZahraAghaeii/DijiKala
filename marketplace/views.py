@@ -3,6 +3,7 @@ from .models import Product, Store, CartItem, CustomerProfile, SellerProfile, Or
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
+from django.contrib import messages
 from decimal import Decimal
 
 # ۱. صفحه اصلی
@@ -213,7 +214,6 @@ def checkout_view(request):
         order = Order.objects.create(customer=customer, total_amount=total_price)
         
         # ۳. ثبت تک‌تک آیتم‌ها در تاریخچه سفارشات
-        # ۳. ثبت تک‌تک آیتم‌ها در تاریخچه سفارشات
         for item in cart_items:
             OrderItem.objects.create(
                 order=order,
@@ -222,7 +222,7 @@ def checkout_view(request):
                 price=item.product.price
             )
             
-            # منطق جدید: اضافه کردن پول به موجودی فروشگاه
+            # اضافه کردن پول به موجودی فروشگاه
             store = item.product.store
             store.balance += (item.product.price * item.quantity)
             store.save()
@@ -232,7 +232,7 @@ def checkout_view(request):
         # هدایت به پنل مشتری برای دیدن خرید موفق
         return redirect('customer_panel') 
     else:
-        # اگر موجودی کافی نبود، تازه اینجاست که می‌فرستیمش به صفحه افزایش موجودی!
+        # اگر موجودی کافی نبود، می‌فرستیمش به صفحه افزایش موجودی
         return redirect('payment')
         
 # ویوی نمایش تاریخچه سفارشات
@@ -245,3 +245,22 @@ def order_history_view(request):
     orders = Order.objects.filter(customer=customer).order_by('-date')
     
     return render(request, 'order_history.html', {'orders': orders})
+
+# ویوی هوشمند برای افزایش موجودی کیف پول (اصلاح و یکپارچه شد)
+@login_required
+def deposit_wallet_view(request):
+    if request.method == 'POST':
+        amount_str = request.POST.get('amount')
+        if amount_str:
+            amount = Decimal(amount_str)
+            if amount > 0:
+                # اصلاح شد: استفاده از مدل صحیح CustomerProfile به جای Customer
+                customer, _ = CustomerProfile.objects.get_or_create(user=request.user)
+                customer.balance += amount
+                customer.save()
+                messages.success(request, f"Wallet successfully charged by ${amount}!")
+            else:
+                messages.error(request, "Invalid amount.")
+            
+    return redirect(request.META.get('HTTP_REFERER', 'cart'))
+    

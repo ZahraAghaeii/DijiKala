@@ -5,37 +5,47 @@
 <h2>🛒 Your Cart</h2>
 
 {% if cart_items %}
-    <table class="cart-table">
-        <thead>
-            <tr>
-                <th>Product</th>
-                <th>Store</th>
-                <th>Price</th>
-                <th>Quantity</th>
-                <th>Remove</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in cart_items %}
-                <tr>
-                    <td>{{ item.product.name }}</td>
-                    <td>{{ item.product.store.name }}</td>
-                    <td>${{ item.product.price }}</td>
-                    <td>{{ item.quantity }}</td>
-                    <!-- اینجا دکمه حذف رو اصلاح کردم تا آیتم رو از سبد خرید پاک کنه -->
-                    <td>
-                        <a href="{% url 'remove_from_cart' item.id %}" class="btn btn-danger">❌ Remove</a>
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div style="display: flex; gap: 30px; justify-content: space-between; align-items: center; margin-top: 30px;">
+        
+        <!-- جدول محصولات سبد خرید -->
+        <div style="flex: 3;">
+            <table class="cart-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                        <th style="padding: 12px; text-align: left;">Product</th>
+                        <th style="padding: 12px; text-align: left;">Store</th>
+                        <th style="padding: 12px; text-align: left;">Price</th>
+                        <th style="padding: 12px; text-align: left;">Quantity</th>
+                        <th style="padding: 12px; text-align: left;">Remove</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in cart_items %}
+                        <tr style="border-bottom: 1px solid #dee2e6;">
+                            <td style="padding: 12px;">{{ item.product.name }}</td>
+                            <td style="padding: 12px;">{{ item.product.store.name }}</td>
+                            <td style="padding: 12px;">${{ item.product.price }}</td>
+                            <td style="padding: 12px;">{{ item.quantity }}</td>
+                            <td style="padding: 12px;">
+                                <a href="{% url 'remove_from_cart' item.id %}" style="text-decoration: none; background-color: #007bff; color: white; padding: 6px 12px; border-radius: 4px; font-size: 14px;">❌ Remove</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
 
-    <p><strong>Total:</strong> ${{ total_price }}</p>
-    
-    <!-- اینجا آدرس رو به process_checkout تغییر دادم تا اول موجودی حساب تورو چک کنه -->
-    <a href="{% url 'process_checkout' %}" class="btn">✅ Checkout</a>
+        <!-- بخش قیمت کل و دکمه آبی چک‌اوت (دقیقاً مثل عکس دوم) -->
+        <div style="flex: 1; text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
+            <p style="font-size: 16px; margin: 0;"><strong>Total:</strong><br>${{ total_price }}</p>
+            
+            <!-- دکمه آبی چک‌اوت که اگر موجودی نداشته باشی هدایتت می‌کنه به صفحه پرداخت -->
+            <a href="{% url 'process_checkout' %}" style="display: inline-block; background-color: #007bff; color: white; padding: 12px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 15px; text-align: center;">
+                ✅<br>Checkout
+            </a>
+        </div>
 
+    </div>
 {% else %}
     <p>Your cart is empty.</p>
 {% endif %}
