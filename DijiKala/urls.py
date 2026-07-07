@@ -9,7 +9,7 @@ from marketplace.views import (
     login_view, logout_view, signup_view, create_store_view, add_product_view,
     add_to_cart_view, remove_from_cart_view, checkout_view,
     order_history_view,
-    deposit_wallet_view  # این آدرس جدید برای افزایش موجودی اضافه شد
+    deposit_wallet_view  
 )
 
 urlpatterns = [
@@ -23,15 +23,14 @@ urlpatterns = [
     path('cart/add/<int:product_id>/', add_to_cart_view, name='add_to_cart'),
     path('cart/remove/<int:item_id>/', remove_from_cart_view, name='remove_from_cart'),
     
-    # بخش پرداخت و چک‌اوت
+    # پرداخت و چک‌اوت
     path('cart/checkout/', checkout_view, name='process_checkout'), 
     path('payment/', checkout_view, name='checkout'), 
     path('payment/process/', payment_view, name='payment'),
     
-    # آدرس جدید برای دکمه افزایش موجودی کیف پول
+    # افزایش موجودی
     path('wallet/deposit/', deposit_wallet_view, name='deposit_wallet'),
     
-    # تاریخچه سفارشات
     path('customer/orders/', order_history_view, name='order_history'),
     
     path('signup/', signup_view, name='signup'),

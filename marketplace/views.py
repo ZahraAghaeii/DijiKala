@@ -6,22 +6,19 @@ from django.contrib.auth import login
 from django.contrib import messages
 from decimal import Decimal
 
-# ۱. صفحه اصلی
+# صفحه اصلی
 def home_view(request):
-    # گرفتن همه محصولات و مرتب‌سازی بر اساس جدیدترین‌ها
     products = Product.objects.all().order_by('-created_at')
     return render(request, 'home.html', {'products': products})
 
-# ۲. صفحه لیست فروشگاه‌ها
+# صفحه لیست فروشگاه‌ها
 def stores_view(request):
-    stores = Store.objects.all()  # گرفتن تمام فروشگاه‌ها از دیتابیس
+    stores = Store.objects.all()
     return render(request, 'stores.html', {'stores': stores})
 
-# ۳. صفحه جزئیات فروشگاه
+# صفحه جزئیات فروشگاه
 def store_detail_view(request, store_id):
-    # پیدا کردن فروشگاه بر اساس آی‌دی، اگر نبود ارور 404 می‌دهد
     store = get_object_or_404(Store, id=store_id)
-    # پیدا کردن تمام محصولات متعلق به این فروشگاه
     products = Product.objects.filter(store=store)
     
     context = {
@@ -30,22 +27,18 @@ def store_detail_view(request, store_id):
     }
     return render(request, 'store_detail.html', context)
 
-# ۴. پنل فروشنده
+# پنل فروشنده
 @login_required
 def seller_panel_view(request):
-    # دریافت یا ساخت پروفایل فروشنده
     seller, _ = SellerProfile.objects.get_or_create(user=request.user)
-    # دریافت فروشگاه‌های متعلق به این فروشگاه
     stores = Store.objects.filter(owner=seller)
     
     return render(request, 'seller_panel.html', {'stores': stores})
 
-# ۵. پنل مشتری
+# پنل مشتری
 @login_required
 def customer_panel_view(request):
-    # دریافت یا ساخت پروفایل مشتری
     customer, _ = CustomerProfile.objects.get_or_create(user=request.user)
-    # دریافت سفارشات قبلی کاربر برای بخش تاریخچه سفارشات
     orders = Order.objects.filter(customer=customer).order_by('-date')
     
     context = {
@@ -54,10 +47,9 @@ def customer_panel_view(request):
     }
     return render(request, 'customer_panel.html', context)
 
-# ۶. صفحه سبد خرید
+#  صفحه سبد خرید
 @login_required
 def cart_view(request):
-    # اگر پروفایل مشتری وجود نداشت، خودش خودکار یکی می‌سازد (get_or_create)
     customer, _ = CustomerProfile.objects.get_or_create(user=request.user)
     
     cart_items = CartItem.objects.filter(customer=customer)
@@ -69,12 +61,11 @@ def cart_view(request):
     }
     return render(request, 'cart.html', context)
 
-# ویوی هوشمند افزودن به سبد خرید
+# ویوی افزودن به سبد خرید
 @login_required
 def add_to_cart_view(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     
-    # اگر پروفایل مشتری وجود نداشت، خودش خودکار یکی می‌سازد تا ارور 404 ندهد
     customer, _ = CustomerProfile.objects.get_or_create(user=request.user)
     
     cart_item, created = CartItem.objects.get_or_create(
@@ -92,15 +83,14 @@ def add_to_cart_view(request, product_id):
 # ویوی حذف آیتم از سبد خرید
 @login_required
 def remove_from_cart_view(request, item_id):
-    # پیدا کردن آیتم سبد خرید بر اساس آی‌دی که متعلق به همین کاربر باشد
     customer = get_object_or_404(CustomerProfile, user=request.user)
     cart_item = get_object_or_404(CartItem, id=item_id, customer=customer)
     
-    cart_item.delete() # حذف آیتم از دیتابیس
-    return redirect('cart') # ریدایرکت مجدد به صفحه سبد خرید
+    cart_item.delete() 
+    return redirect('cart')
 
 
-# ۷. صفحه پرداخت آزمایشی
+# صفحه پرداخت 
 @login_required
 def payment_view(request):
     customer, _ = CustomerProfile.objects.get_or_create(user=request.user)
@@ -108,7 +98,6 @@ def payment_view(request):
     total_price = sum(item.product.price * item.quantity for item in cart_items)
     
     if request.method == 'POST' and 'amount' in request.POST:
-        # تبدیل ورودی به Decimal به جای float برای هماهنگی با دیتابیس
         amount_str = request.POST.get('amount', '0')
         if amount_str:
             amount = Decimal(amount_str)
@@ -124,7 +113,8 @@ def payment_view(request):
     }
     return render(request, 'payment.html', context)
 
-# ویوهای موقت برای احراز هویت و ساخت فروشگاه
+
+
 def login_view(request):
     return render(request, 'registration/login.html')
 
@@ -137,12 +127,11 @@ def signup_view(request):
         form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            role = request.POST.get('role')  # دریافت نقش از فرم HTML (customer یا seller)
+            role = request.POST.get('role') 
             
             if role == 'seller':
                 SellerProfile.objects.create(user=user)
             else:
-                # به صورت پیش‌فرض یا در صورت انتخاب مشتری
                 CustomerProfile.objects.create(user=user)
                 
             login(request, user)
@@ -151,7 +140,7 @@ def signup_view(request):
         form = UserCreationForm()
     return render(request, 'registration/signup.html', {'form': form})
 
-
+# ساخت فروشگاه جدید
 @login_required
 def create_store_view(request):
     seller, _ = SellerProfile.objects.get_or_create(user=request.user)
@@ -165,12 +154,12 @@ def create_store_view(request):
             
     return render(request, 'seller_panel.html')
 
+# اضافه کردن محصول به فروشگاه
 @login_required
 def add_product_view(request, store_id):
     store = get_object_or_404(Store, id=store_id)
     seller, _ = SellerProfile.objects.get_or_create(user=request.user)
     
-    # امنیت: بررسی اینکه آیا این فروشگاه واقعاً متعلق به کاربر فعلی است یا خیر
     if store.owner != seller:
         return redirect('home')
         
@@ -178,7 +167,7 @@ def add_product_view(request, store_id):
         name = request.POST.get('name')
         price = request.POST.get('price')
         description = request.POST.get('description')
-        image = request.FILES.get('image') # برای آپلود تصویر اختیاری
+        image = request.FILES.get('image') 
         
         if name and price:
             Product.objects.create(
@@ -203,17 +192,13 @@ def checkout_view(request):
         
     total_price = sum(item.product.price * item.quantity for item in cart_items)
     
-    # اول چک می‌کنیم: آیا موجودی کاربر کافی هست؟
     if customer.balance >= total_price:
-        # اگر کافی بود، خرید انجام میشه:
-        # ۱. کسر از موجودی مشتری
+        
         customer.balance -= total_price
         customer.save()
         
-        # ۲. ثبت سفارش اصلی
         order = Order.objects.create(customer=customer, total_amount=total_price)
         
-        # ۳. ثبت تک‌تک آیتم‌ها در تاریخچه سفارشات
         for item in cart_items:
             OrderItem.objects.create(
                 order=order,
@@ -222,31 +207,26 @@ def checkout_view(request):
                 price=item.product.price
             )
             
-            # اضافه کردن پول به موجودی فروشگاه
             store = item.product.store
             store.balance += (item.product.price * item.quantity)
             store.save()
             
-        cart_items.delete() # خالی کردن سبد خرید
+        cart_items.delete() 
         
-        # هدایت به پنل مشتری برای دیدن خرید موفق
         return redirect('customer_panel') 
     else:
-        # اگر موجودی کافی نبود، می‌فرستیمش به صفحه افزایش موجودی
         return redirect('payment')
         
 # ویوی نمایش تاریخچه سفارشات
 @login_required
 def order_history_view(request):
-    # پیدا کردن پروفایل مشتری
     customer, _ = CustomerProfile.objects.get_or_create(user=request.user)
     
-    # گرفتن تمام سفارشات این مشتری به همراه آیتم‌های داخل هر سفارش
     orders = Order.objects.filter(customer=customer).order_by('-date')
     
     return render(request, 'order_history.html', {'orders': orders})
 
-# ویوی هوشمند برای افزایش موجودی کیف پول (اصلاح و یکپارچه شد)
+# ویوی برای افزایش موجودی کیف پول 
 @login_required
 def deposit_wallet_view(request):
     if request.method == 'POST':
@@ -254,7 +234,6 @@ def deposit_wallet_view(request):
         if amount_str:
             amount = Decimal(amount_str)
             if amount > 0:
-                # اصلاح شد: استفاده از مدل صحیح CustomerProfile به جای Customer
                 customer, _ = CustomerProfile.objects.get_or_create(user=request.user)
                 customer.balance += amount
                 customer.save()
@@ -263,4 +242,3 @@ def deposit_wallet_view(request):
                 messages.error(request, "Invalid amount.")
             
     return redirect(request.META.get('HTTP_REFERER', 'cart'))
-    
