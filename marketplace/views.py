@@ -5,6 +5,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
 from django.contrib import messages
 from decimal import Decimal
+from .forms import CustomSignupForm
 
 # صفحه اصلی
 def home_view(request):
@@ -124,20 +125,21 @@ def logout_view(request):
 
 def signup_view(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = CustomSignupForm(request.POST) 
         if form.is_valid():
             user = form.save()
             role = request.POST.get('role') 
+            phone_number = form.cleaned_data.get('phone') 
             
             if role == 'seller':
                 SellerProfile.objects.create(user=user)
             else:
-                CustomerProfile.objects.create(user=user)
+                CustomerProfile.objects.create(user=user, phone=phone_number)
                 
             login(request, user)
             return redirect('home')
     else:
-        form = UserCreationForm()
+        form = CustomSignupForm() 
     return render(request, 'registration/signup.html', {'form': form})
 
 # ساخت فروشگاه جدید
